@@ -146,6 +146,15 @@
                  handler:aHandler];
 }
 
+- (RNEncryptor *)initWithSettings:(RNCryptorSettings)theSettings passwordData:(NSData *)aPasswordData handler:(RNCryptorHandler)aHandler
+{
+  return [self initWithSettings:theSettings
+                   passwordData:aPasswordData
+                             IV:[[self class] randomDataOfLength:theSettings.IVSize]
+                 encryptionSalt:[[self class] randomDataOfLength:theSettings.keySettings.saltSize]
+                       HMACSalt:[[self class] randomDataOfLength:theSettings.HMACKeySettings.saltSize]
+                        handler:aHandler];
+}
 
 - (RNEncryptor *)initWithSettings:(RNCryptorSettings)theSettings
                          password:(NSString *)aPassword
@@ -155,22 +164,55 @@
                           handler:(RNCryptorHandler)aHandler;
 {
   NSParameterAssert(aPassword.length > 0);  // We'll go forward, but this is undefined behavior for RNCryptor
-  NSParameterAssert(anIV);
-  NSParameterAssert(anEncryptionSalt);
-  NSParameterAssert(anHMACSalt);
+  return [self initWithSettings:theSettings
+                             IV:anIV
+                  encryptionKey:[[self class] keyForPassword:aPassword salt:anEncryptionSalt settings:theSettings.keySettings]
+                        HMACKey:[[self class] keyForPassword:aPassword salt:anHMACSalt settings:theSettings.HMACKeySettings]
+                 encryptionSalt:anEncryptionSalt
+                       HMACSalt:anHMACSalt
+                        handler:aHandler];
+}
 
-  NSData *encryptionKey = [[self class] keyForPassword:aPassword salt:anEncryptionSalt settings:theSettings.keySettings];
-  NSData *HMACKey = [[self class] keyForPassword:aPassword salt:anHMACSalt settings:theSettings.HMACKeySettings];
+- (RNEncryptor *)initWithSettings:(RNCryptorSettings)theSettings
+                     passwordData:(NSData *)aPasswordData
+                               IV:(NSData *)anIV
+                   encryptionSalt:(NSData *)anEncryptionSalt
+                         HMACSalt:(NSData *)aHMACSalt
+                          handler:(RNCryptorHandler)aHandler
+{
+  NSParameterAssert(aPasswordData.length > 0);  // We'll go forward, but this is undefined behavior for RNCryptor
+  return [self initWithSettings:theSettings
+                             IV:anIV
+                  encryptionKey:[[self class] keyForPasswordData:aPasswordData salt:anEncryptionSalt settings:theSettings.keySettings]
+                        HMACKey:[[self class] keyForPasswordData:aPasswordData salt:aHMACSalt settings:theSettings.HMACKeySettings]
+                 encryptionSalt:anEncryptionSalt
+                       HMACSalt:aHMACSalt
+                        handler:aHandler];
+}
+
+- (RNEncryptor *)initWithSettings:(RNCryptorSettings)theSettings
+                               IV:(NSData *)anIV
+                    encryptionKey:(NSData *)anEncryptionKey
+                         HMACKey:(NSData *)aHMACKey
+                   encryptionSalt:(NSData *)anEncryptionSalt
+                         HMACSalt:(NSData *)aHMACSalt
+                          handler:(RNCryptorHandler)aHandler;
+{
+  NSParameterAssert(anIV);
+  NSParameterAssert(anEncryptionKey);
+  NSParameterAssert(aHMACKey);
+  NSParameterAssert(anEncryptionSalt);
+  NSParameterAssert(aHMACSalt);
 
   self = [self initWithSettings:theSettings
-                  encryptionKey:encryptionKey
-                        HMACKey:HMACKey
+                  encryptionKey:anEncryptionKey
+                        HMACKey:aHMACKey
                              IV:anIV
                         handler:aHandler];
   if (self) {
     self.options |= kRNCryptorOptionHasPassword;
     self.encryptionSalt = anEncryptionSalt;
-    self.HMACSalt = anHMACSalt;
+    self.HMACSalt = aHMACSalt;
   }
   return self;
 }

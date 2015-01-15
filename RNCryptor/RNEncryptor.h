@@ -38,6 +38,10 @@
                          password:(NSString *)password
                           handler:(RNCryptorHandler)handler;
 
+- (RNEncryptor *)initWithSettings:(RNCryptorSettings)settings
+                     passwordData:(NSData *)passwordData
+                          handler:(RNCryptorHandler)handler;
+
 // This form with manual IV is generally only used for testing
 - (RNEncryptor *)initWithSettings:(RNCryptorSettings)theSettings
                     encryptionKey:(NSData *)anEncryptionKey
@@ -53,6 +57,20 @@
                          HMACSalt:(NSData *)anHMACSalt
                           handler:(RNCryptorHandler)handler;
 
+- (RNEncryptor *)initWithSettings:(RNCryptorSettings)theSettings
+                     passwordData:(NSData *)aPasswordData
+                               IV:(NSData *)anIV
+                   encryptionSalt:(NSData *)anEncryptionSalt
+                         HMACSalt:(NSData *)aHMACSalt
+                          handler:(RNCryptorHandler)handler;
+
+- (RNEncryptor *)initWithSettings:(RNCryptorSettings)theSettings
+                               IV:(NSData *)anIV
+                    encryptionKey:(NSData *)anEncryptionKey
+                          HMACKey:(NSData *)aHMACKey
+                   encryptionSalt:(NSData *)anEncryptionSalt
+                         HMACSalt:(NSData *)aHMACSalt
+                          handler:(RNCryptorHandler)aHandler;
 
 + (NSData *)encryptData:(NSData *)data withSettings:(RNCryptorSettings)settings password:(NSString *)password error:(NSError **)error;
 + (NSData *)encryptData:(NSData *)data withSettings:(RNCryptorSettings)settings encryptionKey:(NSData *)encryptionKey HMACKey:(NSData *)HMACKey error:(NSError **)error;
