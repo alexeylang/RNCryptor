@@ -81,6 +81,7 @@ static const NSUInteger kPreambleSize = 2;
 @property (nonatomic, readwrite, copy) NSData *encryptionKey;
 @property (nonatomic, readwrite, copy) NSData *HMACKey;
 @property (nonatomic, readwrite, copy) NSString *password;
+@property (nonatomic, readwrite, copy) NSData *passwordData;
 @property (nonatomic, readwrite, assign) BOOL hasV1HMAC;
 
 @property (nonatomic, readwrite, assign) RNCryptorSettings settings;
@@ -95,12 +96,21 @@ static const NSUInteger kPreambleSize = 2;
 @synthesize encryptionKey = _encryptionKey;
 @synthesize HMACKey = _HMACKey;
 @synthesize password = _password;
+@synthesize passwordData = _passwordData;
 @synthesize settings = _settings;
 
 + (NSData *)decryptData:(NSData *)theCipherText withSettings:(RNCryptorSettings)settings password:(NSString *)aPassword error:(NSError **)anError
 {
   RNDecryptor *cryptor = [[self alloc] initWithPassword:aPassword
                                                 handler:^(RNCryptor *c, NSData *d) {}];
+  cryptor.settings = settings;
+  return [self synchronousResultForCryptor:cryptor data:theCipherText error:anError];
+}
+
++ (NSData *)decryptData:(NSData *)theCipherText withSettings:(RNCryptorSettings)settings passwordData:(NSData *)aPasswordData error:(NSError **)anError
+{
+  RNDecryptor *cryptor = [[self alloc] initWithPasswordData:aPasswordData
+                                                    handler:^(RNCryptor *c, NSData *d) {}];
   cryptor.settings = settings;
   return [self synchronousResultForCryptor:cryptor data:theCipherText error:anError];
 }
@@ -118,6 +128,13 @@ static const NSUInteger kPreambleSize = 2;
 {
   RNDecryptor *cryptor = [[self alloc] initWithPassword:aPassword
                                                 handler:^(RNCryptor *c, NSData *d) {}];
+  return [self synchronousResultForCryptor:cryptor data:theCipherText error:anError];
+}
+
++ (NSData *)decryptData:(NSData *)theCipherText withPasswordData:(NSData *)aPasswordData error:(NSError **)anError
+{
+  RNDecryptor *cryptor = [[self alloc] initWithPasswordData:aPasswordData
+                                                    handler:^(RNCryptor *c, NSData *d) {}];
   return [self synchronousResultForCryptor:cryptor data:theCipherText error:anError];
 }
 
@@ -148,6 +165,18 @@ static const NSUInteger kPreambleSize = 2;
   self = [self initWithEncryptionKey:nil HMACKey:nil handler:aHandler];
   if (self) {
     _password = [aPassword copy];
+    _settings = kRNCryptorAES256Settings;
+  }
+  return self;
+}
+
+- (RNDecryptor *)initWithPasswordData:(NSData *)aPasswordData handler:(RNCryptorHandler)aHandler
+{
+  NSParameterAssert(aPasswordData != nil);
+
+  self = [self initWithEncryptionKey:nil HMACKey:nil handler:aHandler];
+  if (self) {
+    _passwordData = [aPasswordData copy];
     _settings = kRNCryptorAES256Settings;
   }
   return self;
@@ -268,10 +297,15 @@ static const NSUInteger kPreambleSize = 2;
 
     NSData *encryptionKeySalt = [data _RNConsumeToIndex:self.settings.keySettings.saltSize];
     NSData *HMACKeySalt = [data _RNConsumeToIndex:self.settings.HMACKeySettings.saltSize];
-    self.encryptionKey = [[self class] keyForPassword:self.password salt:encryptionKeySalt settings:self.settings.keySettings];
-    self.HMACKey = [[self class] keyForPassword:self.password salt:HMACKeySalt settings:self.settings.HMACKeySettings];
-
-    self.password = nil;  // Don't need this anymore.
+    if (self.passwordData) {
+        self.encryptionKey = [[self class] keyForPasswordData:self.passwordData salt:encryptionKeySalt settings:self.settings.keySettings];
+        self.HMACKey = [[self class] keyForPasswordData:self.passwordData salt:HMACKeySalt settings:self.settings.HMACKeySettings];
+        self.passwordData = nil;  // Don't need this anymore.
+    } else {
+        self.encryptionKey = [[self class] keyForPassword:self.password salt:encryptionKeySalt settings:self.settings.keySettings];
+        self.HMACKey = [[self class] keyForPassword:self.password salt:HMACKeySalt settings:self.settings.HMACKeySettings];
+        self.password = nil;  // Don't need this anymore.
+    }
   }
 
   NSData *IV = [data _RNConsumeToIndex:self.settings.IVSize];
