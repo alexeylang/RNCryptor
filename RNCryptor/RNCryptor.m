@@ -266,8 +266,6 @@ RN_CCKeyDerivationPBKDF( CCPBKDFAlgorithm algorithm, const char *password, size_
 
 + (NSData *)keyForPassword:(NSString *)password salt:(NSData *)salt settings:(RNCryptorKeyDerivationSettings)keySettings
 {
-  NSMutableData *derivedKey = [NSMutableData dataWithLength:keySettings.keySize];
-
   // See Issue #77. V2 incorrectly calculated key for multi-byte characters.
   NSData *passwordData;
   if (keySettings.hasV2Password) {
@@ -276,6 +274,13 @@ RN_CCKeyDerivationPBKDF( CCPBKDFAlgorithm algorithm, const char *password, size_
   else {
     passwordData = [password dataUsingEncoding:NSUTF8StringEncoding];
   }
+
+  return [self keyForPasswordData:passwordData salt:salt settings:keySettings];
+}
+
++ (NSData *)keyForPasswordData:(NSData *)passwordData salt:(NSData *)salt settings:(RNCryptorKeyDerivationSettings)keySettings
+{
+  NSMutableData *derivedKey = [NSMutableData dataWithLength:keySettings.keySize];
 
   // Use the built-in PBKDF2 if it's available. Otherwise, we have our own. Hello crazy function pointer.
   int result;
