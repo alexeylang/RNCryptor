@@ -114,15 +114,21 @@ typedef void (^RNCryptorHandler)(RNCryptor *cryptor, NSData *data);
 - (void)addData:(NSData *)data;
 - (void)finish;
 
-/** Generate key given a password and salt using a PBKDF
+/** Converts given a password to NSData and generate key
 *
-* @param password Password to use for PBKDF
-* @param salt Salt for password
-* @param keySettings Settings for the derivation (RNCryptorKeyDerivationSettings)
-* @returns Key
-* @throws if settings are illegal
+* @see keyForPasswordData:salt:settings:
 */
 + (NSData *)keyForPassword:(NSString *)password salt:(NSData *)salt settings:(RNCryptorKeyDerivationSettings)keySettings;
+
+/** Generate key given a password data and salt using a PBKDF
+ *
+ * @param password Password to use for PBKDF
+ * @param salt Salt for password
+ * @param keySettings Settings for the derivation (RNCryptorKeyDerivationSettings)
+ * @returns Key
+ * @throws if settings are illegal
+ */
++ (NSData *)keyForPasswordData:(NSData *)passwordData salt:(NSData *)salt settings:(RNCryptorKeyDerivationSettings)keySettings;
 
 /** Generate random data
 *
