@@ -293,18 +293,16 @@ static const NSUInteger kPreambleSize = 2;
 
   NSError *error = nil;
   if (self.options & kRNCryptorOptionHasPassword) {
-    NSAssert(!self.encryptionKey && !self.HMACKey, @"Both password and the key (%d) or HMACKey (%d) are set.", self.encryptionKey != nil, self.HMACKey != nil);
-
     NSData *encryptionKeySalt = [data _RNConsumeToIndex:self.settings.keySettings.saltSize];
     NSData *HMACKeySalt = [data _RNConsumeToIndex:self.settings.HMACKeySettings.saltSize];
     if (self.passwordData) {
-        self.encryptionKey = [[self class] keyForPasswordData:self.passwordData salt:encryptionKeySalt settings:self.settings.keySettings];
-        self.HMACKey = [[self class] keyForPasswordData:self.passwordData salt:HMACKeySalt settings:self.settings.HMACKeySettings];
-        self.passwordData = nil;  // Don't need this anymore.
-    } else {
-        self.encryptionKey = [[self class] keyForPassword:self.password salt:encryptionKeySalt settings:self.settings.keySettings];
-        self.HMACKey = [[self class] keyForPassword:self.password salt:HMACKeySalt settings:self.settings.HMACKeySettings];
-        self.password = nil;  // Don't need this anymore.
+      self.encryptionKey = [[self class] keyForPasswordData:self.passwordData salt:encryptionKeySalt settings:self.settings.keySettings];
+      self.HMACKey = [[self class] keyForPasswordData:self.passwordData salt:HMACKeySalt settings:self.settings.HMACKeySettings];
+      self.passwordData = nil;  // Don't need this anymore.
+    } else if (self.password) {
+      self.encryptionKey = [[self class] keyForPassword:self.password salt:encryptionKeySalt settings:self.settings.keySettings];
+      self.HMACKey = [[self class] keyForPassword:self.password salt:HMACKeySalt settings:self.settings.HMACKeySettings];
+      self.password = nil;  // Don't need this anymore.
     }
   }
 
