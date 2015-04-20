@@ -192,7 +192,7 @@ static const NSUInteger kPreambleSize = 2;
 
 - (void)decryptData:(NSData *)data
 {
-  dispatch_async(self.queue, ^{
+  dispatch_async(self.queue, ^{ @autoreleasepool {
     if (self.hasHMAC) {
       CCHmacUpdate(&_HMACContext, data.bytes, data.length);
     }
@@ -211,7 +211,7 @@ static const NSUInteger kPreambleSize = 2;
       self.handler(self, self.outData);
     });
     [self.outData setLength:0];
-  });
+  }});
 }
 
 - (void)addData:(NSData *)theData
@@ -332,7 +332,7 @@ static const NSUInteger kPreambleSize = 2;
     return;
   }
 
-  dispatch_async(self.queue, ^{
+  dispatch_async(self.queue, ^{ @autoreleasepool {
     NSError *error = nil;
     NSData *decryptedData = [self.engine finishWithError:&error];
 
@@ -356,7 +356,7 @@ static const NSUInteger kPreambleSize = 2;
     }
 
     [self cleanupAndNotifyWithError:nil];
-  });
+  }});
 }
 
 @end

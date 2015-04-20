@@ -235,7 +235,7 @@
     return;
   }
 
-  dispatch_async(self.queue, ^{
+  dispatch_async(self.queue, ^{ @autoreleasepool {
     if (!self.haveWrittenHeader) {
       NSData *header = [self header];
       [self.outData setData:header];
@@ -260,7 +260,7 @@
       self.handler(self, self.outData);
     });
     [self.outData setLength:0];
-  });
+  }});
 }
 
 - (void)finish
@@ -269,7 +269,7 @@
     return;
   }
 
-  dispatch_async(self.queue, ^{
+  dispatch_async(self.queue, ^{ @autoreleasepool {
     NSError *error = nil;
     NSData *encryptedData = [self.engine finishWithError:&error];
     [self.outData appendData:encryptedData];
@@ -280,7 +280,7 @@
       [self.outData appendData:HMACData];
     }
     [self cleanupAndNotifyWithError:error];
-  });
+  }});
 }
 
 @end
